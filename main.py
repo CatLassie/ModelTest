@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification, AutoModelForCausalLM
 
 from config import Config
 
@@ -49,15 +49,21 @@ def main():
         raise Exception("Model does not exist!")
 
     tokenizer = AutoTokenizer.from_pretrained(model_full_path)
-    model = AutoModel.from_pretrained(model_full_path)
+    # model = AutoModel.from_pretrained(model_full_path)
     # model = AutoModelForSequenceClassification.from_pretrained(model_full_path)
+    model = AutoModelForCausalLM.from_pretrained(model_full_path)
 
+    print('input', sequence)
     model_input = tokenizer(sequence, return_tensors='pt')
-    print('input', model_input)
+    print('model_input', model_input)
 
-    model_output = model(**model_input)
-    print('output', model_output)
+    # model_output = model(**model_input)
+    model_output = model.generate(**model_input, max_length=50)
+    print('model_output', model_output)
     # print('output', model_output.logits)
+
+    output = tokenizer.decode(model_output[0], skip_special_tokens=True)
+    print('output', output)
 
 
 if __name__ == '__main__':
