@@ -2,7 +2,8 @@ import os
 import sys
 import logging
 import argparse
-from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification, AutoModelForCausalLM
+import torch
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification, AutoModelForCausalLM, Qwen2ForCausalLM
 
 from config import Config
 
@@ -53,17 +54,25 @@ def main():
     # model = AutoModelForSequenceClassification.from_pretrained(model_full_path)
     model = AutoModelForCausalLM.from_pretrained(model_full_path)
 
-    print('input', sequence)
-    model_input = tokenizer(sequence, return_tensors='pt')
-    print('model_input', model_input)
+    device = "cpu" # "cuda" if torch.cuda.is_available() else "cpu"
+    print('device', device)
+
+    model.to(device)
+
+    print('\nINPUT:\n', sequence)
+    model_input = tokenizer(sequence, return_tensors='pt').to(device)
+    print('\nmodel_input:\n', type(model_input))
 
     # model_output = model(**model_input)
-    model_output = model.generate(**model_input, max_length=50)
-    print('model_output', model_output)
+
+    with torch.no_grad():
+        model_output = model.generate(**model_input)
+    print('\nmodel_output\n', model_output.shape)
     # print('output', model_output.logits)
 
     output = tokenizer.decode(model_output[0], skip_special_tokens=True)
-    print('output', output)
+    print("\noutput type and length:", type(output), len(output))
+    print('\nOUTPUT:\n', output)
 
 
 if __name__ == '__main__':
