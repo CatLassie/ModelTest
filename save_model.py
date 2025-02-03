@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import argparse
+from pathlib import Path
 from transformers import AutoModel, AutoTokenizer
 
 from config import Config
@@ -10,13 +11,9 @@ from config import Config
 
 parser = argparse.ArgumentParser(description='arguments')
 parser.add_argument("--model_name", "-m", type=str,
-                    required=True, help='model to load')
-parser.add_argument("--sequence", "-s", type=str,
-                    required=True, help='input sequence')
+                    required=True, help='model to save')
 args = parser.parse_args()
 model_name: str = args.model_name
-sequence: str = args.sequence
-
 
 ######## CONFIG ########
 
@@ -39,20 +36,22 @@ logging.basicConfig(level=log_lvls[conf.log_lvl], handlers=handlers)
 lg.info('\nSTART LOGGING\n')
 lg.info(f'\nParsed command line arguments: {args}\n')
 
-
 ######## MAIN ########
 
 
 def main():
     model_full_path = os.path.join(conf.model_base_path, model_name)
-    if not os.path.exists(model_full_path):
-        raise Exception("Model does not exist!")
+    Path(model_full_path).mkdir(parents=True, exist_ok=True)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_full_path)
-    model = AutoModel.from_pretrained(model_full_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    lg.info(f'\nTokenizer downloaded successfully')
+    tokenizer.save_pretrained(model_full_path)
+    lg.info(f'\nTokenizer saved successfully')
 
-    print('tokenizer', type(tokenizer))
-    print('model', type(model))
+    model = AutoModel.from_pretrained(model_name)
+    lg.info(f'\nModel downloaded successfully')
+    model.save_pretrained(model_full_path)
+    lg.info(f'\nModel saved successfully')
 
 
 if __name__ == '__main__':
