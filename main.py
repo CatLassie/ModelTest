@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
 
 from config import Config
 
@@ -50,9 +50,14 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_full_path)
     model = AutoModel.from_pretrained(model_full_path)
+    # model = AutoModelForSequenceClassification.from_pretrained(model_full_path)
 
-    print('tokenizer', type(tokenizer))
-    print('model', type(model))
+    model_input = tokenizer(sequence, return_tensors='pt')
+    print('input', model_input)
+
+    model_output = model(**model_input)
+    print('output', model_output)
+    # print('output', model_output.logits)
 
 
 if __name__ == '__main__':
