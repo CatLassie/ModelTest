@@ -48,30 +48,34 @@ def main():
     model_full_path = os.path.join(conf.model_base_path, model_name)
     if not os.path.exists(model_full_path):
         raise Exception("Model does not exist!")
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print('device', device)
 
     tokenizer = AutoTokenizer.from_pretrained(model_full_path)
     # model = AutoModel.from_pretrained(model_full_path)
     # model = AutoModelForSequenceClassification.from_pretrained(model_full_path)
     model = AutoModelForCausalLM.from_pretrained(model_full_path)
 
-    device = "cpu" # "cuda" if torch.cuda.is_available() else "cpu"
-    print('device', device)
 
     model.to(device)
 
     print('\nINPUT:\n', sequence)
     model_input = tokenizer(sequence, return_tensors='pt').to(device)
-    print('\nmodel_input:\n', type(model_input))
+    print('\ninput sequence type and length:', type(sequence), len(sequence))
+    print('model_input ids shape:', model_input["input_ids"].shape)
+    # decoded_input = tokenizer.decode(model_input["input_ids"][0], skip_special_tokens=True)
+    # print('decoded_input:', decoded_input)
 
     # model_output = model(**model_input)
 
     with torch.no_grad():
         model_output = model.generate(**model_input)
-    print('\nmodel_output\n', model_output.shape)
+    print('model_output shape:', model_output.shape)
     # print('output', model_output.logits)
 
     output = tokenizer.decode(model_output[0], skip_special_tokens=True)
-    print("\noutput type and length:", type(output), len(output))
+    print("output type and length:", type(output), len(output))
     print('\nOUTPUT:\n', output)
 
 
