@@ -1,0 +1,98 @@
+To run the **smallest version** of **Mistral-7B-Instruct** efficiently on your **NVIDIA RTX 4070 GPU**, we will use a **4-bit quantized** model with `AutoGPTQ` or `BitsAndBytes`.  
+
+---
+
+## **1️⃣ Install Required Dependencies**
+Run the following command in your terminal:  
+```bash
+pip install torch transformers accelerate auto-gptq optimum
+```
+🔹 This installs **Hugging Face Transformers, Accelerate**, and **AutoGPTQ** (for quantization).  
+
+---
+
+## **2️⃣ Load the Smallest Model (4-bit Quantized)**
+We will use the **GPTQ-quantized** version from TheBloke (which is optimized for minimal VRAM usage).  
+Here’s the code to load and run it:
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load the 4-bit quantized model from TheBloke
+model_name = "TheBloke/Mistral-7B-Instruct-v0.1-GPTQ"
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Load model with 4-bit quantization
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    device_map="auto",
+    torch_dtype=torch.float16,
+    trust_remote_code=True
+)
+
+# Move model to GPU
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+# Example prompt
+prompt = "Explain the theory of relativity in simple terms."
+
+# Tokenize input
+inputs = tokenizer(prompt, return_tensors="pt").to(device)
+
+# Generate response
+with torch.no_grad():
+    output = model.generate(**inputs, max_new_tokens=200)
+
+# Decode output
+response = tokenizer.decode(output[0], skip_special_tokens=True)
+print(response)
+```
+
+---
+
+## **3️⃣ Expected VRAM Usage**
+- The **4-bit GPTQ model** uses **~4GB of VRAM**, making it **suitable for an RTX 4070**.  
+- If you experience VRAM issues, try `max_memory={0: "4GB"}` inside `from_pretrained()`.
+
+---
+
+## **Alternative: 4-bit BitsAndBytes (More Flexible)**
+If you want **even lower memory usage**, use **BitsAndBytes (bnb)** instead:
+
+```bash
+pip install bitsandbytes
+```
+
+Then, modify the model loading step:  
+
+```python
+from transformers import BitsAndBytesConfig
+
+# 4-bit quantization config
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
+)
+
+# Load model with BitsAndBytes
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True
+)
+```
+
+---
+
+## **Which setup do you prefer?**  
+- ✅ **GPTQ (Faster, but slightly more VRAM needed)**
+- ✅ **BitsAndBytes (More RAM-efficient, but may be slightly slower)**  
+
+Let me know which works best for you! 🚀

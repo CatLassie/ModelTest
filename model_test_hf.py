@@ -57,6 +57,8 @@ def main():
     # model = AutoModelForSequenceClassification.from_pretrained(model_full_path)
     model = AutoModelForCausalLM.from_pretrained(model_full_path)
 
+    # with torch.no_grad():
+    #     model.lm_head.weight = model.model.embed_tokens.weight
 
     model.to(device)
 

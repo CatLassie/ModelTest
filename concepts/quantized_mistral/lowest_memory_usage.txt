@@ -1,0 +1,24 @@
+Alternative: 4-bit BitsAndBytes (More Flexible)
+If you want even lower memory usage, use BitsAndBytes (bnb) instead
+
+pip install bitsandbytes
+
+Then, modify the model loading step:
+
+from transformers import BitsAndBytesConfig
+
+# 4-bit quantization config
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
+)
+
+# Load model with BitsAndBytes
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True
+)

@@ -1,0 +1,51 @@
+**Quantization** and **distillation** are two techniques used to reduce the size and computational requirements of machine learning models while attempting to retain as much of their performance as possible. Here's an overview of each:
+
+---
+
+### **Quantization**
+
+**Definition:**  
+Quantization is the process of reducing the precision of the numbers used to represent a model’s parameters (such as weights) and/or activations. Instead of using 32-bit floating point (FP32) numbers, for example, you might use 16-bit (FP16) or 8-bit (INT8) representations.
+
+**How It Works:**
+- **Lower Precision Representation:**  
+  The model's parameters are converted to lower precision data types. For example, converting FP32 weights to FP16 or INT8. This reduces the memory footprint.
+- **Faster Computation:**  
+  Lower precision arithmetic can be faster on certain hardware (like GPUs and specialized accelerators), enabling quicker inference.
+- **Potential Trade-Off:**  
+  While quantization significantly reduces model size and inference latency, it may sometimes result in a slight decrease in accuracy. However, techniques like quantization-aware training can mitigate this loss.
+
+**Use Cases:**  
+- Deploying models on resource-constrained devices (e.g., mobile phones, embedded systems).
+- Accelerating inference in production environments without substantial loss in model performance.
+
+---
+
+### **Distillation (Knowledge Distillation)**
+
+**Definition:**  
+Distillation is a training process where a smaller, often simpler, model (called the "student") is trained to mimic the behavior of a larger, more complex model (called the "teacher"). The student model learns to approximate the teacher’s output, effectively "distilling" the knowledge from the teacher.
+
+**How It Works:**
+- **Teacher-Student Framework:**  
+  The teacher model is typically a high-capacity model that has been pre-trained and performs very well on a task. The student model is initialized with a simpler architecture.
+- **Training Process:**  
+  During training, the student model is fed the same input data as the teacher. Instead of only learning from the true labels, the student also learns to match the teacher’s outputs (which may be probability distributions over classes, soft targets, or internal representations). This often involves minimizing a loss function that measures the difference between the teacher’s predictions and the student’s predictions.
+- **Advantages:**  
+  The student model becomes smaller and faster while retaining much of the teacher model’s accuracy. Distillation can also help the student generalize better.
+
+**Use Cases:**  
+- Reducing model size and computational requirements for deployment.
+- Achieving faster inference times while maintaining acceptable accuracy.
+- Transferring knowledge from an ensemble of models into a single model.
+
+---
+
+### **In Summary**
+
+- **Quantization** reduces the precision of the model's parameters (e.g., from FP32 to FP16 or INT8), resulting in a smaller model and faster inference, with a possible slight drop in accuracy.
+- **Distillation** trains a smaller "student" model to replicate the behavior of a larger "teacher" model, aiming to maintain high performance while reducing model size and complexity.
+
+Both techniques are often used in tandem to create efficient models that can run on devices with limited resources without significantly sacrificing accuracy. 
+
+Let me know if you need more details or examples on these topics!

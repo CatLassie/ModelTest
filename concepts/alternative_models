@@ -1,0 +1,25 @@
+MEDIUM:
+
+Mistral-7B-Instruct
+Meta-Llama-2-7B-Chat
+DeepSeek-7B-Chat
+Gemma-7B-It
+
+SMALL:
+Mistral-7B-Distilled
+Phi-2
+TinyLlama-1.1B
+
+
+Summary:
+
+Mistral-7B-Distilled is better for general NLP, chatbots, summarization, and reasoning.
+DeepSeek-R1-Distill is better if you focus on coding + technical tasks.
+
+
+
+ VRAM & Storage Needs
+Model	FP16 VRAM	4-bit Quantized VRAM	Storage
+Mistral-7B-Distilled	~15GB	~4GB	~13GB
+DeepSeek-R1-Distill (1.5B)	~4GB	~2GB	~2GB
+DeepSeek-R1-Distill (6.7B)	~12GB	~3GB	~10GB
