@@ -1,0 +1,51 @@
+Not **every** Hugging Face model can be used with `bitsandbytes`, but **many** can, especially transformer-based models. Here are some key factors to consider:  
+
+### ✅ **Models that Work Well with `bitsandbytes`**
+- **Most transformer-based models** (BERT, GPT-2, GPT-3-style, LLaMA, Mistral, etc.).
+- **Decoder-only models** (e.g., `Meta/Llama-2`, `Mistral-7B`, `Falcon`, `GPT-J`, etc.).
+- **Encoder-decoder models** (e.g., `BART`, `T5`, `Flan-T5`).
+- **Causal language models** (e.g., `mistralai/Mistral-7B-Instruct`).
+
+### ❌ **Models That Might Not Work or Need Extra Work**
+- **Very small models** (e.g., tiny BERT) → `bitsandbytes` is overkill here.
+- **Certain vision models** → `bitsandbytes` mainly targets transformers; vision models may require extra setup.
+- **Non-PyTorch models** → `bitsandbytes` is built around PyTorch, so TensorFlow and JAX models won’t work directly.
+- **Models with unsupported layers** → Some custom layers (e.g., in highly specialized architectures) may not be quantized correctly.
+
+### 💡 **How to Use `bitsandbytes` with Hugging Face Models**
+Most models can be **loaded in 4-bit or 8-bit** using the `BitsAndBytesConfig` from `transformers`:
+
+#### 🚀 **Example: Loading a Model in 4-bit**
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+import torch
+
+model_name = "mistralai/Mistral-7B-Instruct"
+
+# Define quantization config
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,  # Use 4-bit quantization
+    bnb_4bit_quant_type="nf4",  # Normalized Float 4 (better than fp4)
+    bnb_4bit_compute_dtype=torch.float16,  # Use float16 for compute
+    bnb_4bit_use_double_quant=True  # Use double quantization for efficiency
+)
+
+# Load model with quantization
+model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=quantization_config, device_map="auto")
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Run inference
+text = "Tell me a joke."
+inputs = tokenizer(text, return_tensors="pt").to("cuda")  # Move to GPU
+output = model.generate(**inputs)
+print(tokenizer.decode(output[0], skip_special_tokens=True))
+```
+
+### ⚡ **Advantages of Using `bitsandbytes`**
+- **Reduces VRAM usage** → A 7B model that normally needs **~30GB VRAM** can run on a **24GB GPU**.
+- **Enables larger models on consumer GPUs** → You can run models like `Llama-2-13B` on an **RTX 3090**.
+- **Maintains performance close to full precision** (with `nf4`).
+
+Would you like help setting up `bitsandbytes` for a specific model? 🚀

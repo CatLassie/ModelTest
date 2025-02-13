@@ -1,0 +1,76 @@
+### **🔍 `torch.compile()` in PyTorch**
+`torch.compile()` is a function introduced in **PyTorch 2.0** that **optimizes model execution** by compiling the computation graph for **faster inference and training**. It helps **reduce execution time and memory usage** by optimizing operations at runtime.
+
+---
+
+## **🚀 Why Use `torch.compile()`?**
+✅ **Speeds up model execution** (10-50% faster in many cases)  
+✅ **Reduces memory overhead**  
+✅ **Works with any PyTorch model** without modifying architecture  
+✅ **Replaces `torch.jit`** for dynamic models (no need to trace/static compile)
+
+---
+
+## **🔹 How to Use `torch.compile()`**
+Using `torch.compile()` is simple. You **wrap your model** before running inference or training:
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Load model
+model_name = "mistralai/Mistral-7B-Instruct"
+model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16, device_map="auto")
+
+# Compile the model (Only for PyTorch 2.0+)
+model = torch.compile(model)
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Run inference
+text = "Explain quantum physics in simple terms."
+inputs = tokenizer(text, return_tensors="pt").to("cuda")
+output = model.generate(**inputs)
+print(tokenizer.decode(output[0], skip_special_tokens=True))
+```
+
+---
+
+## **🔥 How Much Faster is `torch.compile()`?**
+Speedup varies depending on the model, but typically:
+- **Transformers**: 10-30% faster  
+- **Vision Models (CNNs)**: 20-50% faster  
+- **Large LMs (Mistral, LLaMA, etc.)**: 10-20% faster  
+
+---
+
+## **🔧 Advanced Options**
+You can tweak `torch.compile()` for **different optimization levels**:
+
+```python
+model = torch.compile(model, mode="max-autotune")  # Best performance
+```
+
+| Mode | Speed | Memory | Notes |
+|------|-------|--------|-------|
+| **`default`** | ✅✅✅ | ✅✅✅ | Good balance |
+| **`reduce-overhead`** | ✅✅ | ✅✅✅✅ | Lower overhead |
+| **`max-autotune`** | ✅✅✅✅ | ✅✅ | Best performance |
+
+---
+
+## **⚠️ When NOT to Use `torch.compile()`**
+❌ **On small models** (Overhead may negate benefits)  
+❌ **If using `torch.jit`** (They don’t work together)  
+❌ **For debugging** (Harder to inspect intermediate tensors)  
+
+---
+
+## **🔹 TL;DR**
+- `torch.compile()` **speeds up models** by compiling them at runtime.  
+- **Works best on large models** (like Mistral-7B, LLaMA).  
+- **Easy to use**, just wrap your model: `model = torch.compile(model)`.  
+- **Not always needed** for small models or debugging.
+
+Would you like a benchmark comparison with and without `torch.compile()`? 🚀

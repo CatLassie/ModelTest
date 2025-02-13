@@ -1,0 +1,175 @@
+To load **DeepSeek-R1-1.5B** with `bitsandbytes` in **4-bit quantization**, follow this guide:  
+
+---
+
+### 🚀 **Step 1: Install Required Packages**
+First, ensure you have the latest versions of the necessary libraries:  
+```bash
+pip install transformers accelerate bitsandbytes
+```
+
+---
+
+### ⚡ **Step 2: Load DeepSeek-R1-1.5B with `bitsandbytes` in 4-bit**
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+import torch
+
+# Model name (official DeepSeek R1 1.5B)
+model_name = "deepseek-ai/deepseek-r1-1.5b"
+
+# Configure bitsandbytes 4-bit quantization
+quant_config = BitsAndBytesConfig(
+    load_in_4bit=True,  
+    bnb_4bit_quant_type="nf4",  # Normalized Float 4 (better precision than fp4)
+    bnb_4bit_compute_dtype=torch.float16,  # Use float16 for computations
+    bnb_4bit_use_double_quant=True  # Apply double quantization for better efficiency
+)
+
+# Load the model with quantization
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=quant_config,
+    device_map="auto"  # Automatically assigns model to available GPU
+)
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Run inference
+text = "What is the capital of France?"
+inputs = tokenizer(text, return_tensors="pt").to("cuda")  # Move inputs to GPU
+output = model.generate(**inputs)
+print(tokenizer.decode(output[0], skip_special_tokens=True))
+```
+
+---
+
+### 🔥 **How Much VRAM Does This Save?**
+- Running `deepseek-r1-1.5b` in **full precision (fp16)** requires **6-7GB VRAM**.
+- Running it in **4-bit with `bitsandbytes`** reduces this to **~3.5GB VRAM**, making it much easier to run on **RTX 3060 (12GB), RTX 4060, 4070, and similar GPUs**.
+
+Would you like me to add anything, such as **8-bit quantization** or **performance optimization tips**? 🚀
+
+
+
+
+
+
+
+
+
+
+
+
+yes
+
+
+
+
+
+
+
+
+
+Here are **additional quantization optimizations** for running **DeepSeek-R1-1.5B** efficiently on consumer GPUs.  
+
+---
+
+## 🚀 **1️⃣ Using 8-bit Quantization (More Precision, Slightly More VRAM)**
+If you have more VRAM available and want **better precision**, you can use **8-bit quantization** instead of 4-bit.
+
+### 🔹 **Modify the `BitsAndBytesConfig` for 8-bit**
+```python
+quant_config = BitsAndBytesConfig(
+    load_in_8bit=True  # 8-bit quantization (instead of 4-bit)
+)
+```
+
+Then, load the model with:
+```python
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    quantization_config=quant_config,
+    device_map="auto"
+)
+```
+
+### **⚡ Expected VRAM Usage**
+| Precision | VRAM Usage | Notes |
+|-----------|------------|--------|
+| **fp16 (full precision)** | ~6-7GB | Best accuracy, requires a lot of memory |
+| **8-bit (`bnb`)** | ~5GB | Good tradeoff between precision & memory |
+| **4-bit (`bnb`)** | ~3.5GB | Most efficient, small accuracy tradeoff |
+
+---
+
+## 🔥 **2️⃣ Optimizing Performance with `torch.compile`**
+Hugging Face models benefit from `torch.compile()`, which speeds up inference.
+
+Modify the model loading:
+```python
+import torch
+
+model = torch.compile(model)  # Speeds up inference on PyTorch 2.0+
+```
+
+This can give up to **30% faster inference speeds** on modern GPUs.
+
+---
+
+## ⚡ **3️⃣ Using `auto-gptq` for Even More Efficient Quantization**
+If you need even lower memory usage, consider **GPTQ quantization** (`AutoGPTQ`). This is more optimized than `bitsandbytes` for some models.
+
+### 🔹 **Install `auto-gptq`**
+```bash
+pip install auto-gptq
+```
+
+### 🔹 **Load the Model with GPTQ**
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from auto_gptq import AutoGPTQForCausalLM
+
+model_name = "TheBloke/DeepSeek-R1-1.5B-GPTQ"  # A pre-quantized GPTQ model
+
+# Load GPTQ quantized model
+model = AutoGPTQForCausalLM.from_quantized(
+    model_name, 
+    device="cuda:0",
+    use_safetensors=True,  # Use safetensors for efficiency
+    torch_dtype=torch.float16
+)
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Run inference
+text = "Explain quantum physics in simple terms."
+inputs = tokenizer(text, return_tensors="pt").to("cuda")
+output = model.generate(**inputs)
+print(tokenizer.decode(output[0], skip_special_tokens=True))
+```
+
+### **🔥 Advantages of GPTQ**
+✅ Even **lower VRAM usage** than `bitsandbytes`  
+✅ **Faster inference speeds**  
+
+---
+
+## **Which Quantization Should You Use?**
+| Method | VRAM Usage | Speed | Accuracy Loss? | Best For |
+|--------|-----------|-------|---------------|-----------|
+| **fp16 (Full Precision)** | ~6-7GB | ✅✅ | ❌ None | Best accuracy |
+| **bnb 8-bit** | ~5GB | ✅✅✅ | 🔸 Minimal | Good balance |
+| **bnb 4-bit** | ~3.5GB | ✅✅✅✅ | 🔸 Slight | Best for low-VRAM GPUs |
+| **GPTQ 4-bit** | **~3GB** | ✅✅✅✅✅ | 🔸 Slight | Most efficient |
+
+---
+
+### **TL;DR - What Should You Use?**
+- If you have **6GB+ VRAM**, use **8-bit (`bnb`)** for a good balance.  
+- If you have **4GB-5GB VRAM**, use **4-bit (`bnb`)**.  
+- If you want **maximum efficiency**, use **GPTQ**.  
+
+Would you like a comparison of inference speeds across different GPUs? 🚀

@@ -1,0 +1,102 @@
+Here's an example of **quantizing a Hugging Face model** using `optimum` with **bitsandbytes (int8)** and **ONNX Runtime (int8)**.  
+
+---
+
+## **🔹 Example 1: Quantizing with `bitsandbytes` (INT8 for PyTorch)**
+This method **reduces memory usage** and **improves inference speed** while keeping performance close to FP16.
+
+### **Install dependencies:**
+```bash
+pip install transformers optimum bitsandbytes accelerate
+```
+
+### **Load and Quantize a BERT Model**
+```python
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+import torch
+import bitsandbytes as bnb
+
+# Load the model in int8 mode
+model_name = "bert-base-uncased"
+model = AutoModelForSequenceClassification.from_pretrained(
+    model_name, 
+    load_in_8bit=True,  # Enable quantization
+    device_map="auto"   # Auto-assign to GPU if available
+)
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Example input
+text = "Quantization helps reduce model size and speed up inference."
+inputs = tokenizer(text, return_tensors="pt")
+
+# Move inputs to the same device as model
+inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+# Inference
+with torch.no_grad():
+    outputs = model(**inputs)
+
+print(outputs.logits)
+```
+🔹 **Why `bitsandbytes`?**  
+- Reduces memory by **up to 75%**  
+- Works well on **consumer GPUs** (like RTX 4070, 4090)  
+- No need for extra conversion steps  
+
+---
+
+## **🔹 Example 2: Quantizing with `optimum` ONNX (INT8)**
+This approach **converts a model to ONNX format** and then applies quantization.
+
+### **Install dependencies:**
+```bash
+pip install optimum onnxruntime onnxruntime-tools
+```
+
+### **Convert & Quantize a Model**
+```python
+from optimum.onnxruntime import ORTModelForSequenceClassification
+from optimum.onnxruntime.configuration import AutoQuantizationConfig
+from transformers import AutoTokenizer
+import torch
+
+model_name = "bert-base-uncased"
+
+# Convert model to ONNX format
+onnx_model = ORTModelForSequenceClassification.from_pretrained(
+    model_name,
+    export=True  # Convert to ONNX
+)
+
+# Apply quantization (INT8)
+quantization_config = AutoQuantizationConfig.avx2()
+quantized_model = onnx_model.quantize(quantization_config)
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Example input
+text = "ONNX quantization reduces latency for CPU inference."
+inputs = tokenizer(text, return_tensors="pt")
+
+# Run inference
+with torch.no_grad():
+    outputs = quantized_model(**inputs)
+
+print(outputs.logits)
+```
+
+🔹 **Why ONNX Runtime?**  
+- Optimized for **CPU inference**  
+- Reduces **latency by up to 50%**  
+- Works well on **Intel and AMD processors**  
+
+---
+
+## **🔹 Summary**
+| Method         | Best For        | Reduction in Memory | Speedup |
+|---------------|----------------|---------------------|---------|
+| `bitsandbytes` (int8) | **GPU inference** | 🔽 ~75% | 🚀 Faster |
+| ONNX (int8)   | **CPU inference** | 🔽 ~50% | 🚀 Faster |
+
+Would you like a **quantization example for a large LLM** like Mistral or DeepSeek? 🚀

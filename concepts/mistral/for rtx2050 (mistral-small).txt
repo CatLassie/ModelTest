@@ -1,0 +1,92 @@
+### **Setting Up Mistral Small with Ollama & Hugging Face**  
+
+I'll guide you through installing and running **Mistral Small** on both **Ollama** and **Hugging Face Transformers**. Since you have an **RTX 2050 (4GB VRAM)**, you'll likely need **quantization** to run it efficiently.  
+
+---
+
+## **1️⃣ Running Mistral Small with Ollama**  
+### **Step 1: Install Ollama**  
+If you haven't installed Ollama yet, follow these steps:  
+🔹 **Windows** → Download & install from [Ollama's website](https://ollama.com/download)  
+🔹 **Linux/macOS** → Run:  
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+### **Step 2: Pull the Mistral Small Model**  
+Ollama doesn't have an official **Mistral Small** model yet, but you can try the standard Mistral model:  
+```sh
+ollama pull mistral
+```
+For a smaller, more optimized model, you might want to try:  
+```sh
+ollama pull mistral:7b-instruct
+```
+or  
+```sh
+ollama pull mistral:latest
+```
+
+### **Step 3: Run Mistral in Ollama**  
+To start a chat:  
+```sh
+ollama run mistral
+```
+Or, if you want to run a **custom prompt**:  
+```sh
+ollama run mistral "Summarize this text: [Your text here]"
+```
+
+---
+
+## **2️⃣ Running Mistral Small with Hugging Face Transformers**  
+
+### **Step 1: Install Required Libraries**  
+First, install Hugging Face and PyTorch:  
+```sh
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install transformers accelerate auto-gptq
+```
+
+### **Step 2: Load Mistral Small (Quantized) in Python**  
+Since you’re on an RTX 2050, we'll use **4-bit quantization** with **AutoGPTQ** for efficiency.
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+# Load the model (Use a quantized version to save VRAM)
+model_name = "TheBloke/Mistral-7B-Instruct-v0.1-GPTQ"  # GPTQ Quantized Model
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    device_map="auto",   # Automatically assigns model to GPU if available
+    torch_dtype=torch.float16,  # Use lower precision for better efficiency
+)
+
+# Generate text
+input_text = "Summarize this: The history of AI is..."
+inputs = tokenizer(input_text, return_tensors="pt").to("cuda")
+output = model.generate(**inputs, max_length=200)
+
+# Decode output
+print(tokenizer.decode(output[0], skip_special_tokens=True))
+```
+
+---
+
+## **3️⃣ Which One is Better for You?**
+| **Feature**           | **Ollama**                           | **Hugging Face Transformers**  |
+|----------------------|--------------------------------|--------------------------------|
+| **Ease of Use**       | ✅ Simple CLI-based setup  | 🔧 Requires Python & PyTorch setup  |
+| **Performance**       | ⚡ Optimized, but no GPU support | 🚀 Better control & GPU acceleration  |
+| **Quantization**      | ❌ No control over quantization  | ✅ You can load **4-bit GPTQ models**  |
+| **Customization**     | ❌ Limited model tuning  | ✅ Full control over model parameters  |
+
+If you **just want to run Mistral quickly**, **Ollama** is easier.  
+If you **need better performance & GPU support**, **Hugging Face** is better.  
+
+---
+
+Would you like help with **fine-tuning** or **additional optimizations**? 🚀
