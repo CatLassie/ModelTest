@@ -54,3 +54,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 install the hugging face transformers package:
 
 pip install transformers
+
+install ollama
+
+pip install ollama
